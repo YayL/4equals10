@@ -1,6 +1,7 @@
 import sys
 import itertools
 
+
 class Numbers:
     def __init__(self, arr):
         self.numbers = arr
@@ -10,6 +11,9 @@ class Numbers:
         self.DIV = True
         self.GROUP = True
         self.soloutions = []
+
+    def get_sol(self):
+        return self.soloutions[0] if len(self.soloutions) else "None found"
 
     def str_combinations(self, left, right):
         res = []
@@ -46,44 +50,39 @@ class Numbers:
         return res
 
     def calc(self, l_list, m_list, r_list):
-        l_list = self.op(l_list)
-        m_list = self.op(m_list)
-        r_list = self.op(r_list)
+        l_list, m_list, r_list = self.op(l_list), self.op(m_list), self.op(r_list)
         l_list_len, r_list_len = len(l_list), len(r_list)
 
         results = []
 
-        if l_list_len and r_list_len:
+        if not self.GROUP:
+            results += m_list
+        elif l_list_len and r_list_len:
             for left in l_list:
                 for middle in m_list:
-                    l_m_list = self.str_combinations(left, "(" + middle + ")")
-                    for right in r_list:
-                        for left_middle in l_m_list:
+                    for left_middle in self.str_combinations(left, "(" + middle + ")"):
+                        for right in r_list:
                             results += self.str_combinations(left_middle, right)
         elif l_list_len:
             for left in l_list:
                 for middle in m_list:
                     results += self.str_combinations(left, "(" + middle + ")")
-        elif r_list_len:
+        else:
             for middle in m_list:
                 for right in r_list:
                     results += self.str_combinations("(" + middle + ")", right)
-        else:
-            results += m_list
 
         return results
 
     def solve(self):
-        permutations = itertools.permutations(self.numbers, 4)
-        groupings = list(itertools.combinations(list(range(0, 5)), 2))
+        permutations = itertools.permutations(self.numbers, len(self.numbers))
+        groupings = list(itertools.combinations(list(range(0, len(self.numbers) + 1)), 2))
         for perm in permutations:
+            results = []
             if self.GROUP:
+                results = []
                 for group in groupings:
-                    left = perm[0:group[0]]
-                    middle = perm[group[0]:group[1]]
-                    right = perm[group[1]:]
-
-                    results = self.calc(left, middle, right)
+                    results += self.calc(perm[0:group[0]], perm[group[0]:group[1]], perm[group[1]:])
             else:
                 results = self.calc([], perm, [])
 
@@ -95,6 +94,12 @@ class Numbers:
                 except ZeroDivisionError:
                     continue
 
-nums = Numbers(map(int, list(sys.argv[1])))
-nums.solve()
-print(nums.soloutions)
+nums_with_group = Numbers(list(map(int, list(sys.argv[1]))))
+
+nums_without_group = Numbers(nums_with_group.numbers)
+nums_without_group.GROUP = False
+
+nums_with_group.solve()
+nums_without_group.solve()
+print(f"With grouping({len(nums_with_group.soloutions)}) = {nums_with_group.get_sol()}")
+print(f"Without grouping({len(nums_without_group.soloutions)}) = {nums_without_group.get_sol()}")
